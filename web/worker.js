@@ -23,8 +23,13 @@ self.onunhandledrejection = function (event) {
 
 self.postMessage({ type: "init-progress", step: "worker script started" });
 
-const PYODIDE_VERSION = "v314.0.6";
-const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/`;
+// Pyodide is bundled locally (web/vendor/pyodide/), not loaded from the CDN
+// at runtime. That's not an optimization -- loading it remotely turned out
+// to fail inside Pyodide's own internal startup specifically when running
+// under Tauri's custom protocol origin, in a way that was never fully
+// isolated even after ruling out network access, importScripts sanitization,
+// and worker type. Bundling removes that whole class of problem outright.
+const PYODIDE_INDEX_URL = new URL("vendor/pyodide/", self.location.href).href;
 
 let pyodideReadyPromise = null;
 let engine = null;
@@ -48,7 +53,7 @@ function withTimeout(promise, ms, label) {
 // "Script error." for cross-origin loads.
 let loadPyodide;
 async function loadPyodideScript() {
-  reportInitProgress("importing pyodide.mjs from CDN");
+  reportInitProgress("importing pyodide.mjs (bundled)");
   const mod = await withTimeout(import(PYODIDE_INDEX_URL + "pyodide.mjs"), 30000, "importing pyodide.mjs");
   loadPyodide = mod.loadPyodide;
   reportInitProgress("pyodide.mjs loaded");
