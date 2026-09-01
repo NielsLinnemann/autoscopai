@@ -16,15 +16,21 @@ Get the app for your computer from the [Releases page](https://github.com/NielsL
 Because this app isn't (yet) registered with Apple or Microsoft, your computer will show a security warning the first time you open it. This is normal for a small, independently made app — here's how to get past it:
 
 **On a Mac:**
-1. Double-click AutoscopAI in your Applications folder.
-2. If you see a warning that it "cannot be verified" or "is damaged": don't click Cancel/Move to Trash. Instead, right-click (or Control-click) the AutoscopAI icon and choose **Open**, then click **Open** again in the dialog that appears.
-3. If that still doesn't work, open **System Settings → Privacy & Security**, scroll down, and you should see a message about AutoscopAI being blocked with an **Open Anyway** button. Click it, confirm with your password or Touch ID, then try opening the app again.
+1. Drag AutoscopAI into your Applications folder (if you haven't already).
+2. Double-click it. You'll very likely see a message that it **"is damaged and can't be opened."** This is a misleading message — the app isn't actually damaged, it's just unrecognized. Don't move it to the Trash.
+3. Open **Terminal** (press `Cmd+Space`, type `Terminal`, press Return — it's a built-in Mac app, in Applications → Utilities).
+4. Paste this line into the Terminal window and press Return:
+   ```bash
+   xattr -cr /Applications/AutoscopAI.app
+   ```
+   This just tells your Mac "I trust this, stop treating it as a fresh unknown download" — it doesn't change or install anything else.
+5. Now double-click AutoscopAI in Applications again — it opens normally.
+
+You only need to do this once per download — after that, it launches normally like any other app.
 
 **On Windows:**
 1. Double-click the file you downloaded.
 2. If you see a blue "Windows protected your PC" screen, click **More info**, then click **Run anyway**.
-
-You only need to do this once — after the first successful open, it launches normally like any other app.
 
 ## What it does, briefly
 
