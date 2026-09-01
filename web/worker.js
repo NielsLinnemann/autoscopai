@@ -40,39 +40,23 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
-// Diagnostic: fetch() reports real, inspectable errors (unlike
-// importScripts, which sanitizes cross-origin failures to "Script error."
-// with no detail). This tells us whether outbound network access to the
-// CDN works at all from inside this worker, independent of importScripts.
-(async () => {
-  try {
-    const response = await withTimeout(fetch(PYODIDE_INDEX_URL + "pyodide.js", { method: "HEAD" }), 15000, "diagnostic HEAD fetch");
-    self.postMessage({ type: "init-progress", step: `diagnostic fetch: HTTP ${response.status}, ok=${response.ok}` });
-  } catch (error) {
-    self.postMessage({ type: "init-progress", step: `diagnostic fetch FAILED: ${(error && (error.message || error.toString())) || error}` });
-  }
-})();
-
-// Classic worker + importScripts, not a module worker with dynamic import().
-// Module workers have strict MIME-type requirements for both the worker
-// script itself and anything it dynamically imports; that silently hung
-// (no error, no progress) under Tauri's custom asset protocol. importScripts
-// has no such requirement and is the more broadly compatible choice here.
-//
-// Wrapped in try/catch deliberately: importScripts loads a cross-origin
-// script, and an uncaught error from it only ever reaches the parent as a
-// browser-sanitized "Script error." with no real message. Catching it here
-// ourselves gets the real error/message before that sanitization applies.
-reportInitProgress("loading pyodide.js from CDN");
-try {
-  importScripts(PYODIDE_INDEX_URL + "pyodide.js");
-} catch (error) {
-  self.postMessage({ type: "error", message: `importScripts(pyodide.js) failed: ${(error && error.message) || error}` });
-  throw error;
+// Confirmed directly: pyodide.js itself throws "Classic web workers are not
+// supported" -- Pyodide requires a module worker (it needs import.meta.url /
+// dynamic import internally), it's not something Tauri restricts. Use the
+// ESM build via dynamic import(), which -- unlike importScripts() -- has
+// real CORS semantics and reports genuine errors rather than a sanitized
+// "Script error." for cross-origin loads.
+let loadPyodide;
+async function loadPyodideScript() {
+  reportInitProgress("importing pyodide.mjs from CDN");
+  const mod = await withTimeout(import(PYODIDE_INDEX_URL + "pyodide.mjs"), 30000, "importing pyodide.mjs");
+  loadPyodide = mod.loadPyodide;
+  reportInitProgress("pyodide.mjs loaded");
 }
-reportInitProgress("pyodide.js loaded");
 
 async function initPyodide() {
+  await loadPyodideScript();
+
   reportInitProgress("loading Pyodide runtime (wasm)");
   const pyodide = await withTimeout(loadPyodide({ indexURL: PYODIDE_INDEX_URL }), 60000, "loadPyodide()");
 

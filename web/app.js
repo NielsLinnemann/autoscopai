@@ -43,7 +43,7 @@ const pendingRequests = new Map();
 let runHandlers = null;
 
 function initWorker() {
-  worker = new Worker("worker.js");
+  worker = new Worker("worker.js", { type: "module" });
   let gotAnyMessage = false;
   const progressLog = [];
   setTimeout(() => {
