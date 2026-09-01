@@ -18,10 +18,16 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
-async function initPyodide() {
-  reportInitProgress("importing pyodide.mjs from CDN");
-  const { loadPyodide } = await withTimeout(import(PYODIDE_INDEX_URL + "pyodide.mjs"), 30000, "importing pyodide.mjs");
+// Classic worker + importScripts, not a module worker with dynamic import().
+// Module workers have strict MIME-type requirements for both the worker
+// script itself and anything it dynamically imports; that silently hung
+// (no error, no progress) under Tauri's custom asset protocol. importScripts
+// has no such requirement and is the more broadly compatible choice here.
+reportInitProgress("loading pyodide.js from CDN");
+importScripts(PYODIDE_INDEX_URL + "pyodide.js");
+reportInitProgress("pyodide.js loaded");
 
+async function initPyodide() {
   reportInitProgress("loading Pyodide runtime (wasm)");
   const pyodide = await withTimeout(loadPyodide({ indexURL: PYODIDE_INDEX_URL }), 60000, "loadPyodide()");
 

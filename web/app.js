@@ -52,7 +52,7 @@ function debugLog(message) {
 
 function initWorker() {
   debugLog("initWorker: creating worker");
-  worker = new Worker("worker.js", { type: "module" });
+  worker = new Worker("worker.js");
   worker.onmessage = (event) => {
     const msg = event.data;
     debugLog(`worker message: ${JSON.stringify(msg).slice(0, 500)}`);
