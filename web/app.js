@@ -522,6 +522,42 @@ async function uploadFiles(fileList) {
   }
 }
 
+function uint8ToBase64(bytes) {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function uploadFilesFromPaths(paths) {
+  if (!paths.length) return;
+  if (paths.length > 2) {
+    alert("Drop at most two files.");
+    return;
+  }
+  if (!workerReady) {
+    alert("The Python runtime is still starting up. Wait a moment and try again.");
+    return;
+  }
+  try {
+    const results = [];
+    for (const path of paths) {
+      const bytes = await window.__TAURI__.fs.readFile(path);
+      const base64Data = uint8ToBase64(bytes);
+      const name = path.split(/[\\/]/).pop();
+      const text = await extractViaWorker(name, base64Data);
+      results.push({ name, kind: detectKind(name), text });
+    }
+    state.uploaded = results;
+    renderUploaded();
+    updateCostEstimate();
+  } catch (error) {
+    alert(`Could not read that file: ${error.message}`);
+  }
+}
+
 function renderUploaded() {
   const list = $("uploaded-files");
   list.innerHTML = "";
@@ -1031,16 +1067,36 @@ document.querySelectorAll(".help-button").forEach((button) => {
 });
 
 const dropZone = $("drop-zone");
-dropZone.addEventListener("dragover", (event) => {
-  event.preventDefault();
-  dropZone.classList.add("dragging");
-});
-dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragging"));
-dropZone.addEventListener("drop", (event) => {
-  event.preventDefault();
-  dropZone.classList.remove("dragging");
-  uploadFiles(event.dataTransfer.files);
-});
+const isTauri = typeof window.__TAURI__ !== "undefined";
+
+if (isTauri) {
+  // The packaged desktop app: the webview's own HTML5 drag-and-drop is
+  // unreliable in WKWebView (drop fires but dataTransfer.files comes back
+  // empty), so use Tauri's native file-drop event instead, which hands us
+  // real file paths read via the fs plugin.
+  window.__TAURI__.webview.getCurrentWebview().onDragDropEvent((event) => {
+    const kind = event.payload.type;
+    if (kind === "over") {
+      dropZone.classList.add("dragging");
+    } else if (kind === "drop") {
+      dropZone.classList.remove("dragging");
+      uploadFilesFromPaths(event.payload.paths);
+    } else {
+      dropZone.classList.remove("dragging");
+    }
+  });
+} else {
+  dropZone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    dropZone.classList.add("dragging");
+  });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragging"));
+  dropZone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    dropZone.classList.remove("dragging");
+    uploadFiles(event.dataTransfer.files);
+  });
+}
 
 window.addEventListener("beforeunload", (event) => {
   if (state.running) {
