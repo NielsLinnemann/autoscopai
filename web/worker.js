@@ -1,6 +1,26 @@
 // AutoscopAI review worker. Runs entirely in a dedicated Web Worker so the
 // tab stays responsive during a run, and so a run keeps going even while the
 // tab is backgrounded (though not if the tab/browser is closed — see README).
+//
+// self.onerror runs in the worker's own realm, so unlike the parent window's
+// worker.onerror (which the browser sanitizes to a generic "Script error."
+// for cross-origin script content), this sees the real message/source/line.
+// Returning true suppresses the default bubble-up to the parent.
+self.onerror = function (message, source, lineno, colno, error) {
+  self.postMessage({
+    type: "error",
+    message: `self.onerror: ${message} at ${source}:${lineno}:${colno}${error && error.stack ? `\n${error.stack}` : ""}`,
+  });
+  return true;
+};
+self.onunhandledrejection = function (event) {
+  const reason = event.reason;
+  self.postMessage({
+    type: "error",
+    message: `unhandled rejection: ${(reason && (reason.stack || reason.message)) || String(reason)}`,
+  });
+};
+
 self.postMessage({ type: "init-progress", step: "worker script started" });
 
 const PYODIDE_VERSION = "v314.0.6";
