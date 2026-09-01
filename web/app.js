@@ -45,6 +45,7 @@ let runHandlers = null;
 function initWorker() {
   worker = new Worker("worker.js");
   let gotAnyMessage = false;
+  const progressLog = [];
   setTimeout(() => {
     if (!gotAnyMessage) {
       const chip = $("engine-status");
@@ -56,6 +57,7 @@ function initWorker() {
     gotAnyMessage = true;
     const msg = event.data;
     if (msg.type === "init-progress") {
+      progressLog.push(msg.step);
       $("engine-status").textContent = `Starting Python runtime… (${msg.step})`;
       return;
     }
@@ -77,9 +79,11 @@ function initWorker() {
     }
     if (msg.type === "error" && !runHandlers) {
       // Not inside an active review run -- this must be a startup/init failure.
+      // Include the recent progress trail so the failure has context even
+      // though messages arrive faster than a human can read them live.
       workerReady = false;
       const chip = $("engine-status");
-      chip.textContent = `Python runtime failed: ${msg.message || "unknown error"}`;
+      chip.textContent = `Python runtime failed: ${msg.message || "unknown error"} | steps so far: ${progressLog.join(" -> ")}`;
       chip.classList.add("error");
       return;
     }
@@ -90,7 +94,7 @@ function initWorker() {
   worker.onerror = (event) => {
     const chip = $("engine-status");
     const detail = event.message || "unknown worker error";
-    chip.textContent = `Python runtime failed to start: ${detail}`;
+    chip.textContent = `Python runtime failed to start: ${detail} | steps so far: ${progressLog.join(" -> ")}`;
     chip.classList.add("error");
     console.error("Worker error", event);
   };

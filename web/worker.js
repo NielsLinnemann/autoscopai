@@ -40,6 +40,19 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
+// Diagnostic: fetch() reports real, inspectable errors (unlike
+// importScripts, which sanitizes cross-origin failures to "Script error."
+// with no detail). This tells us whether outbound network access to the
+// CDN works at all from inside this worker, independent of importScripts.
+(async () => {
+  try {
+    const response = await withTimeout(fetch(PYODIDE_INDEX_URL + "pyodide.js", { method: "HEAD" }), 15000, "diagnostic HEAD fetch");
+    self.postMessage({ type: "init-progress", step: `diagnostic fetch: HTTP ${response.status}, ok=${response.ok}` });
+  } catch (error) {
+    self.postMessage({ type: "init-progress", step: `diagnostic fetch FAILED: ${(error && (error.message || error.toString())) || error}` });
+  }
+})();
+
 // Classic worker + importScripts, not a module worker with dynamic import().
 // Module workers have strict MIME-type requirements for both the worker
 // script itself and anything it dynamically imports; that silently hung
