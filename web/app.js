@@ -42,10 +42,24 @@ let requestCounter = 0;
 const pendingRequests = new Map();
 let runHandlers = null;
 
+const DEBUG_LOG_PATH = "/tmp/autoscopai-debug.log";
+function debugLog(message) {
+  console.log(message);
+  if (!isTauri) return;
+  const line = `${new Date().toISOString()} ${message}\n`;
+  window.__TAURI__.fs.writeTextFile(DEBUG_LOG_PATH, line, { append: true }).catch(() => {});
+}
+
 function initWorker() {
+  debugLog("initWorker: creating worker");
   worker = new Worker("worker.js", { type: "module" });
   worker.onmessage = (event) => {
     const msg = event.data;
+    debugLog(`worker message: ${JSON.stringify(msg).slice(0, 500)}`);
+    if (msg.type === "init-progress") {
+      $("engine-status").textContent = `Starting Python runtime… (${msg.step})`;
+      return;
+    }
     if (msg.type === "ready") {
       workerReady = true;
       const chip = $("engine-status");
@@ -62,15 +76,24 @@ function initWorker() {
       }
       return;
     }
+    if (msg.type === "error" && !runHandlers) {
+      // Not inside an active review run -- this must be a startup/init failure.
+      workerReady = false;
+      const chip = $("engine-status");
+      chip.textContent = `Python runtime failed: ${msg.message || "unknown error"}`;
+      chip.classList.add("error");
+      return;
+    }
     if (runHandlers && (msg.type === "progress" || msg.type === "stage-start" || msg.type === "done" || msg.type === "error")) {
       runHandlers(msg);
     }
   };
   worker.onerror = (event) => {
     const chip = $("engine-status");
-    chip.textContent = "Python runtime failed to start";
+    const detail = event.message || "unknown worker error";
+    chip.textContent = `Python runtime failed to start: ${detail}`;
     chip.classList.add("error");
-    console.error("Worker error", event);
+    debugLog(`worker.onerror: ${detail} (${event.filename}:${event.lineno})`);
   };
   worker.postMessage({ type: "init" });
 }

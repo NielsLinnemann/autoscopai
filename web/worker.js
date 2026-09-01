@@ -7,16 +7,38 @@ const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/f
 let pyodideReadyPromise = null;
 let engine = null;
 
+function reportInitProgress(step) {
+  self.postMessage({ type: "init-progress", step });
+}
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`Timed out after ${ms / 1000}s: ${label}`)), ms)),
+  ]);
+}
+
 async function initPyodide() {
-  const { loadPyodide } = await import(PYODIDE_INDEX_URL + "pyodide.mjs");
-  const pyodide = await loadPyodide({ indexURL: PYODIDE_INDEX_URL });
-  await pyodide.loadPackage("micropip");
+  reportInitProgress("importing pyodide.mjs from CDN");
+  const { loadPyodide } = await withTimeout(import(PYODIDE_INDEX_URL + "pyodide.mjs"), 30000, "importing pyodide.mjs");
+
+  reportInitProgress("loading Pyodide runtime (wasm)");
+  const pyodide = await withTimeout(loadPyodide({ indexURL: PYODIDE_INDEX_URL }), 60000, "loadPyodide()");
+
+  reportInitProgress("loading micropip");
+  await withTimeout(pyodide.loadPackage("micropip"), 30000, "loadPackage(micropip)");
+
+  reportInitProgress("installing pypdf");
   const micropip = pyodide.pyimport("micropip");
-  await micropip.install("pypdf");
+  await withTimeout(micropip.install("pypdf"), 30000, "micropip.install(pypdf)");
+
+  reportInitProgress("loading review engine");
   const engineSource = await (await fetch(new URL("autoscop_engine.py", self.location.href))).text();
   pyodide.FS.writeFile("/autoscop_engine.py", engineSource);
   pyodide.runPython('import sys\nsys.path.insert(0, "/")\nimport autoscop_engine');
   engine = pyodide.pyimport("autoscop_engine");
+
+  reportInitProgress("ready");
   return pyodide;
 }
 
