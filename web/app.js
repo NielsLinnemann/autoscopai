@@ -1069,33 +1069,43 @@ document.querySelectorAll(".help-button").forEach((button) => {
 const dropZone = $("drop-zone");
 const isTauri = typeof window.__TAURI__ !== "undefined";
 
+// Always wire up the plain HTML5 drag-and-drop path first, unconditionally.
+// A failure setting up the Tauri-native path below must never be able to
+// take the rest of the app down with it (a crash here previously ran before
+// boot() and broke the whole page -- this structure guarantees boot() always
+// runs, and drag-and-drop degrades rather than the entire app breaking).
+dropZone.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  dropZone.classList.add("dragging");
+});
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragging"));
+dropZone.addEventListener("drop", (event) => {
+  event.preventDefault();
+  dropZone.classList.remove("dragging");
+  uploadFiles(event.dataTransfer.files);
+});
+
 if (isTauri) {
-  // The packaged desktop app: the webview's own HTML5 drag-and-drop is
-  // unreliable in WKWebView (drop fires but dataTransfer.files comes back
-  // empty), so use Tauri's native file-drop event instead, which hands us
-  // real file paths read via the fs plugin.
-  window.__TAURI__.webview.getCurrentWebview().onDragDropEvent((event) => {
-    const kind = event.payload.type;
-    if (kind === "over") {
-      dropZone.classList.add("dragging");
-    } else if (kind === "drop") {
-      dropZone.classList.remove("dragging");
-      uploadFilesFromPaths(event.payload.paths);
-    } else {
-      dropZone.classList.remove("dragging");
-    }
-  });
-} else {
-  dropZone.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    dropZone.classList.add("dragging");
-  });
-  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragging"));
-  dropZone.addEventListener("drop", (event) => {
-    event.preventDefault();
-    dropZone.classList.remove("dragging");
-    uploadFiles(event.dataTransfer.files);
-  });
+  // The packaged desktop app: WKWebView's HTML5 drag-and-drop fires the drop
+  // event but dataTransfer.files often comes back empty, so prefer Tauri's
+  // native file-drop event (real file paths via the fs plugin) when it's
+  // available. Wrapped defensively: if Tauri's webview API isn't ready yet
+  // or throws for any reason, the plain HTML5 listeners above still stand.
+  try {
+    window.__TAURI__.webview.getCurrentWebview().onDragDropEvent((event) => {
+      const kind = event.payload.type;
+      if (kind === "over") {
+        dropZone.classList.add("dragging");
+      } else if (kind === "drop") {
+        dropZone.classList.remove("dragging");
+        uploadFilesFromPaths(event.payload.paths);
+      } else {
+        dropZone.classList.remove("dragging");
+      }
+    }).catch((error) => console.error("Tauri onDragDropEvent setup failed:", error));
+  } catch (error) {
+    console.error("Tauri onDragDropEvent setup threw synchronously:", error);
+  }
 }
 
 window.addEventListener("beforeunload", (event) => {
