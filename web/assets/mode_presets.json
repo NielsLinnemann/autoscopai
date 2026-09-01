@@ -1,0 +1,100 @@
+{
+  "active": "cheapest",
+  "available": [
+    "cheapest",
+    "balanced",
+    "most_suitable"
+  ],
+  "presets": {
+    "cheapest": {
+      "label": "Cheapest",
+      "description": "Minimum-cost defaults using one inexpensive general model for all roles. Best for draft triage and TEST-like routine review, not the strongest philosophical judgment.",
+      "provider": {
+        "name": "openrouter",
+        "default_model": "deepseek/deepseek-v3.2"
+      },
+      "models": {
+        "default": "deepseek/deepseek-v3.2",
+        "reasoning": "deepseek/deepseek-v3.2",
+        "fast": "deepseek/deepseek-v3.2",
+        "editor": "deepseek/deepseek-v3.2"
+      },
+      "agent_models": {
+        "argument": "deepseek/deepseek-v3.2",
+        "evidence": "deepseek/deepseek-v3.2",
+        "method": "deepseek/deepseek-v3.2",
+        "style": "deepseek/deepseek-v3.2",
+        "adversarial": "deepseek/deepseek-v3.2",
+        "revision": "deepseek/deepseek-v3.2",
+        "lead_editor": "deepseek/deepseek-v3.2",
+        "authors_advocate": "deepseek/deepseek-v3.2",
+        "philphys_specialist": "deepseek/deepseek-v3.2",
+        "citation_defender": "deepseek/deepseek-v3.2",
+        "scope_arbiter": "deepseek/deepseek-v3.2",
+        "skeptical_meta_reviewer": "deepseek/deepseek-v3.2",
+        "dialectical_editor": "deepseek/deepseek-v3.2",
+        "learning_teacher": "deepseek/deepseek-v3.2"
+      }
+    },
+    "balanced": {
+      "label": "Balanced",
+      "description": "A moderate-cost mix with stronger reasoning where dialectical judgment matters and cheaper fast models elsewhere.",
+      "provider": {
+        "name": "openrouter",
+        "default_model": "deepseek/deepseek-v3.2"
+      },
+      "models": {
+        "default": "deepseek/deepseek-v3.2",
+        "reasoning": "qwen/qwen3.5-122b-a10b",
+        "fast": "google/gemini-2.5-flash",
+        "editor": "mistralai/mistral-medium-3.1"
+      },
+      "agent_models": {
+        "argument": "qwen/qwen3.5-122b-a10b",
+        "evidence": "google/gemini-2.5-flash",
+        "method": "qwen/qwen3.5-122b-a10b",
+        "style": "google/gemini-2.5-flash",
+        "adversarial": "qwen/qwen3.5-122b-a10b",
+        "revision": "google/gemini-2.5-flash",
+        "lead_editor": "mistralai/mistral-medium-3.1",
+        "authors_advocate": "qwen/qwen3.5-122b-a10b",
+        "philphys_specialist": "google/gemini-2.5-flash",
+        "citation_defender": "mistralai/mistral-medium-3.1",
+        "scope_arbiter": "google/gemini-2.5-flash",
+        "skeptical_meta_reviewer": "qwen/qwen3.5-122b-a10b",
+        "dialectical_editor": "mistralai/mistral-medium-3.1",
+        "learning_teacher": "google/gemini-2.5-flash"
+      }
+    },
+    "most_suitable": {
+      "label": "Most suitable",
+      "description": "Quality-oriented defaults with stronger models for demanding reasoning and editorial synthesis.",
+      "provider": {
+        "name": "openrouter",
+        "default_model": "openai/gpt-5.6-terra"
+      },
+      "models": {
+        "default": "openai/gpt-5.6-terra",
+        "reasoning": "anthropic/claude-sonnet-5",
+        "fast": "google/gemini-2.5-flash",
+        "editor": "openai/gpt-5.6-terra"
+      },
+      "agent_models": {
+        "argument": "anthropic/claude-sonnet-5",
+        "evidence": "google/gemini-2.5-flash",
+        "method": "anthropic/claude-sonnet-5",
+        "style": "openai/gpt-5.6-terra",
+        "adversarial": "anthropic/claude-sonnet-5",
+        "revision": "openai/gpt-5.6-terra",
+        "lead_editor": "openai/gpt-5.6-terra",
+        "authors_advocate": "anthropic/claude-sonnet-5",
+        "philphys_specialist": "google/gemini-2.5-flash",
+        "citation_defender": "anthropic/claude-sonnet-5",
+        "scope_arbiter": "openai/gpt-5.6-terra",
+        "skeptical_meta_reviewer": "anthropic/claude-sonnet-5",
+        "dialectical_editor": "openai/gpt-5.6-terra",
+        "learning_teacher": "openai/gpt-5.6-terra"
+      }
+    }
+  }
+}

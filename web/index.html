@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AutoscopAI</title>
+    <link rel="icon" href="assets/autoscop-icon.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main id="app-view" class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <img class="brand-symbol" src="assets/autoscop-icon.png" alt="" aria-hidden="true">
+          <div>
+            <p class="eyebrow">Dialectical article review · v0.1 · runs in your browser</p>
+            <h1>AutoscopAI</h1>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="app-help-button" class="help-button top-help" title="Show basic workflow help" aria-label="Show basic workflow help">?</button>
+          <button id="developer-mode" class="developer-toggle" aria-pressed="false">Developer mode</button>
+          <span id="engine-status" class="chip">Starting Python runtime…</span>
+          <button id="save-config" class="secondary" title="Save the current provider settings, API key, agent edits, and common learnings to this browser. Runs and estimates also save settings automatically, but this button lets you save deliberately.">Save settings</button>
+        </div>
+      </header>
+
+      <section id="app-help-panel" class="panel app-help-panel hidden">
+        <div class="row-between">
+          <div>
+            <p class="eyebrow">Help</p>
+            <h2>How AutoscopAI works</h2>
+          </div>
+          <button id="close-app-help" class="ghost icon-button" title="Close help" aria-label="Close help">×</button>
+        </div>
+        <div class="help-grid">
+          <div>
+            <h3>1. Drop your text</h3>
+            <p>Drop one main article file: PDF, LaTeX, Markdown, or plain text. You may add one bibliography/reference file, such as a BibTeX file.</p>
+          </div>
+          <div>
+            <h3>2. Choose a mode</h3>
+            <p><strong>Cheapest</strong> keeps costs down. <strong>Balanced</strong> uses a stronger mix. <strong>Most suitable</strong> prioritizes review quality and may cost more.</p>
+          </div>
+          <div>
+            <h3>3. Add your API key</h3>
+            <p>For real reviews, enter a provider API key in Settings. The key is saved only in this browser's local storage on this computer, and is sent directly from this page to the provider you choose. TEST mode is only shown in Developer mode.</p>
+          </div>
+          <div>
+            <h3>4. Read the results</h3>
+            <p>The final verdict appears below the workflow. History keeps previous runs, intermediate agent feedback, and common learnings for future writing.</p>
+          </div>
+        </div>
+        <p class="muted small">Treat the output as fallible feedback, not as an authority. Cost estimates are rough planning aids and can differ from actual provider charges. This build runs a real Python engine inside your browser via Pyodide (WebAssembly) — there is no server and no separate Python install.</p>
+      </section>
+
+      <section class="workspace">
+        <aside class="left-rail">
+          <section class="panel">
+            <div class="row-between">
+              <p class="eyebrow">Settings</p>
+              <button type="button" class="help-button" title="Choose a provider, paste that provider's API key, and set a default model. The key is stored only in this browser's local storage, never sent anywhere except directly to the provider you choose. OpenRouter lets different model families share one key; OpenAI API uses OpenAI model names; Custom expects an OpenAI-compatible /chat/completions endpoint.">?</button>
+            </div>
+            <label>
+              <span class="label-row">Provider <button type="button" class="help-button" title="OpenRouter is the default because it can route to many model families. OpenAI API and Custom OpenAI-compatible endpoints are available, but direct Anthropic/Google APIs use different protocols and are not wired here.">?</button></span>
+              <select id="provider-select">
+                <option value="openrouter">OpenRouter</option>
+                <option value="openai">OpenAI API</option>
+                <option value="custom">Custom OpenAI-compatible</option>
+              </select>
+            </label>
+            <label>
+              <span class="label-row">Base URL <button type="button" class="help-button" title="The app sends requests to this provider endpoint plus /chat/completions, directly from this page. For OpenRouter use https://openrouter.ai/api/v1.">?</button></span>
+              <input id="base-url">
+            </label>
+            <label>
+              <span class="label-row">Default model <button type="button" class="help-button" title="Used when an individual agent has no model set. Agent-specific models in the organigram take priority.">?</button></span>
+              <input id="default-model">
+            </label>
+            <label>
+              <span class="label-row">API key <button type="button" class="help-button" title="Saved only in this browser's local IndexedDB storage, scoped to this app. It is masked in the UI after saving. Unlike a server-backed app, this key is held in page JavaScript and sent directly to the provider on every call.">?</button></span>
+              <input id="api-key" type="password" placeholder="Paste API key">
+            </label>
+            <p class="muted" id="key-status"></p>
+            <div id="settings-help" class="help-panel hidden"></div>
+            <p class="muted small">Warning: the uploaded article, references, and prompts are sent to your selected third-party model provider (OpenRouter, OpenAI, or a custom endpoint) to generate reviews, directly from this browser page. AutoscopAI does not vet any provider's data handling. Check for yourself whether you are comfortable sending this material to the provider configured above before uploading confidential or unpublished work.</p>
+            <div class="divider"></div>
+            <div class="row-between">
+              <p class="eyebrow">Agent settings file</p>
+              <button type="button" class="help-button" title="Export or import the agent organigram: names, models, temperatures, focus, and instructions for every first-round, dialectical, and editor agent. This file never includes your API key, provider, or base URL, so it's safe to hand to a collaborator who is helping tune the agents.">?</button>
+            </div>
+            <div class="agent-io-actions">
+              <button id="export-agents" class="secondary" type="button">Export agent settings</button>
+              <button id="import-agents" class="secondary" type="button">Import agent settings</button>
+              <input id="agent-settings-file" type="file" accept="application/json,.json">
+            </div>
+            <p class="muted small" id="agent-io-status"></p>
+          </section>
+
+          <section class="panel">
+            <p class="eyebrow">Mode</p>
+            <div class="segmented" id="preset-control">
+              <button data-preset="cheapest">Cheapest</button>
+              <button data-preset="balanced">Balanced</button>
+              <button data-preset="most_suitable">Most suitable</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <p class="eyebrow">Run</p>
+            <label class="inline developer-only">
+              <input id="test-mode" type="checkbox">
+              TEST mode
+            </label>
+            <p class="muted developer-only">TEST fakes every agent call so you can try the workflow for free.</p>
+            <p class="cost" id="cost-estimate">Estimated cost: drop files first</p>
+            <p class="muted small">Cost estimates are rough planning aids only; provider pricing, routing, tokenization, retries, and model behavior can change.</p>
+            <div class="progress-wrap">
+              <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <p class="muted" id="progress-label">Idle</p>
+          </section>
+
+          <button id="run-review" class="run-button">Run Full Review</button>
+          <div id="run-result" class="run-result hidden"></div>
+          <div id="job-status" class="job-status developer-only"></div>
+          <section class="panel disclaimer-panel">
+            <p class="eyebrow">Educational preview</p>
+            <p class="muted small">AutoscopAI v0.1 is experimental educational software for trying review workflows. It makes no guarantees about correctness, completeness, fitness for publication decisions, costs, privacy in deployed settings, or availability. Everything runs locally in your browser (or in the desktop app wrapper): a real Python engine via Pyodide/WebAssembly, with settings and history kept in this browser's local storage. Closing the tab or window stops an in-progress run.</p>
+          </section>
+        </aside>
+
+        <section class="center-stage">
+          <section class="stage stage-input">
+            <div class="stage-title">Input files</div>
+            <div class="input-node-row">
+              <div class="drop-box" id="drop-zone">
+                <input id="file-input" type="file" multiple>
+                <button id="choose-files" class="secondary" type="button">Drop files</button>
+                <p class="drop-hint">or drag &amp; drop here</p>
+              </div>
+              <div class="input-file-info">
+                <p class="muted small">Up to two files: main article + optional reference.</p>
+                <div id="uploaded-files" class="file-list"></div>
+              </div>
+            </div>
+          </section>
+          <div class="arrow">↓</div>
+          <div class="flow" id="flow"></div>
+        </section>
+
+        <aside class="right-rail">
+          <section class="panel editor-panel">
+            <div class="row-between">
+              <div class="brand-lockup compact">
+                <img class="agent-symbol" src="assets/autoscop-icon.png" alt="" aria-hidden="true">
+                <div>
+                  <p class="eyebrow">Agent</p>
+                  <h2 id="agent-editor-title">Select an agent</h2>
+                </div>
+              </div>
+              <button id="close-agent-editor" class="ghost icon-button hidden" title="Close agent editor" aria-label="Close agent editor">×</button>
+            </div>
+            <div class="add-actions">
+              <button id="add-first-agent" class="secondary">Add first-round</button>
+              <button id="add-dialect-agent" class="secondary">Add dialectical</button>
+            </div>
+            <div id="agent-form" class="stack hidden">
+              <label>
+                Emoji
+                <input id="agent-emoji" maxlength="4">
+              </label>
+              <label>
+                Name
+                <input id="agent-name">
+              </label>
+              <label>
+                Stage
+                <select id="agent-stage" disabled>
+                  <option value="first">First round</option>
+                  <option value="dialect">Dialectical round</option>
+                  <option value="editor">Editor</option>
+                </select>
+              </label>
+              <label>
+                Model
+                <input id="agent-model">
+              </label>
+              <label>
+                Temperature
+                <input id="agent-temp" type="number" min="0" max="1.2" step="0.05">
+              </label>
+              <label>
+                Thinking effort
+                <select id="agent-reasoning">
+                  <option value="default">Provider default</option>
+                  <option value="minimal">Minimal</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </label>
+              <label>
+                Focus / stance
+                <textarea id="agent-focus" rows="6"></textarea>
+              </label>
+              <label>
+                Additional instructions
+                <textarea id="agent-extra" rows="5"></textarea>
+              </label>
+              <label>
+                Help text
+                <textarea id="agent-help" rows="4"></textarea>
+              </label>
+              <div class="row-between">
+                <label class="inline">
+                  <input id="agent-enabled" type="checkbox">
+                  Enabled
+                </label>
+                <button id="delete-agent" class="danger">Delete</button>
+              </div>
+            </div>
+            <p class="muted" id="agent-placeholder">Click a face in the organigram to edit that agent's model, role, and instructions.</p>
+          </section>
+          <section class="panel history-panel">
+            <div class="row-between">
+              <div>
+                <p class="eyebrow">History</p>
+                <h2>Past runs</h2>
+              </div>
+              <button id="export-history" class="secondary">Export all</button>
+            </div>
+            <p id="export-status" class="muted export-status"></p>
+            <div id="history-list" class="history-list"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="verdict-panel">
+        <div class="row-between">
+          <div>
+            <p class="eyebrow">Verdict</p>
+            <h2 id="verdict-title">No verdict selected</h2>
+          </div>
+          <button id="clear-verdict" class="secondary">Clear</button>
+        </div>
+        <div id="verdict-box" class="rendered-markdown">Run a review or choose a history entry to show the final verdict here.</div>
+      </section>
+
+      <section class="learnings-panel">
+        <div class="row-between">
+          <div>
+            <p class="eyebrow">Common learnings</p>
+            <h2>Writer habits to watch</h2>
+          </div>
+          <button id="add-learning" class="secondary">Add learning</button>
+        </div>
+        <div id="learnings" class="learnings"></div>
+      </section>
+
+      <footer class="app-footer">
+        <p class="muted small">
+          © 2026 FermiCoder ·
+          <a href="https://github.com/NielsLinnemann/autoscopai" target="_blank" rel="noopener noreferrer">GitHub</a>
+          · Built with the help of OpenAI Codex and Anthropic Claude Code.
+        </p>
+      </footer>
+    </main>
+
+    <script src="db.js"></script>
+    <script src="zip-lite.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

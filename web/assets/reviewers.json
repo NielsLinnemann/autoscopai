@@ -1,0 +1,101 @@
+{
+  "reviewers": [
+    {
+      "id": "argument",
+      "name": "Argument Structure Reviewer",
+      "model_env": "ARGUMENT_MODEL",
+      "model_candidates": [
+        "anthropic/claude-opus-5",
+        "anthropic/claude-opus-4.8",
+        "openai/gpt-5.6-sol-pro",
+        "google/gemini-2.5-pro",
+        "openai/o3"
+      ],
+      "temperature": 0.2,
+      "focus": "thesis clarity, argumentative structure, inferential gaps, hidden assumptions, conceptual overclaims, and whether conclusions follow from premises"
+    },
+    {
+      "id": "evidence",
+      "name": "Evidence and Citation Reviewer",
+      "model_env": "EVIDENCE_MODEL",
+      "model_candidates": [
+        "perplexity/sonar-deep-research",
+        "perplexity/sonar-pro-search",
+        "perplexity/sonar-pro",
+        "anthropic/claude-sonnet-5",
+        "google/gemini-3.7-flash"
+      ],
+      "temperature": 0.15,
+      "focus": "claim support, missing literature, weak citations, outdated references, misrepresented sources, and places where the article needs stronger evidence"
+    },
+    {
+      "id": "method",
+      "name": "Methodology or Technical Reviewer",
+      "model_env": "METHOD_MODEL",
+      "model_candidates": [
+        "openai/o3-pro",
+        "openai/gpt-5.6-sol-pro",
+        "openai/o3",
+        "anthropic/claude-opus-5",
+        "google/gemini-2.5-pro"
+      ],
+      "temperature": 0.1,
+      "focus": "methods, formal apparatus, empirical design, data analysis, proof structure, examples, definitions, and technical correctness"
+    },
+    {
+      "id": "style",
+      "name": "Style and Clarity Reviewer",
+      "model_env": "STYLE_MODEL",
+      "model_candidates": [
+        "anthropic/claude-sonnet-5",
+        "openai/gpt-5.6-terra",
+        "openai/gpt-5.6-luna",
+        "google/gemini-3.7-flash",
+        "openai/gpt-4.1-mini"
+      ],
+      "temperature": 0.25,
+      "focus": "prose clarity, paragraph flow, structure, signposting, terminology, redundancy, readability, and audience fit"
+    },
+    {
+      "id": "adversarial",
+      "name": "Adversarial Reviewer",
+      "model_env": "ADVERSARIAL_MODEL",
+      "model_candidates": [
+        "x-ai/grok-4.6",
+        "x-ai/grok-4.5",
+        "anthropic/claude-opus-5",
+        "openai/gpt-5.6-sol-pro",
+        "google/gemini-2.5-pro"
+      ],
+      "temperature": 0.35,
+      "focus": "strong objections, counterexamples, alternative interpretations, hidden assumptions, likely skeptical referee criticisms, and possible fatal weaknesses"
+    },
+    {
+      "id": "revision",
+      "name": "Constructive Revision Reviewer",
+      "model_env": "REVISION_MODEL",
+      "model_candidates": [
+        "anthropic/claude-sonnet-5",
+        "openai/gpt-5.6-terra",
+        "anthropic/claude-opus-5",
+        "openai/gpt-5.6-luna",
+        "openai/gpt-4.1"
+      ],
+      "temperature": 0.25,
+      "focus": "turning criticism into concrete revision priorities, section moves, framing changes, possible rewrites, and author-facing next actions"
+    }
+  ],
+  "lead_editor": {
+    "id": "lead_editor",
+    "name": "Lead Editor",
+    "model_env": "LEAD_EDITOR_MODEL",
+    "model_candidates": [
+      "openai/gpt-5.6-sol-pro",
+      "openai/o3-pro",
+      "anthropic/claude-opus-5",
+      "anthropic/claude-sonnet-5",
+      "google/gemini-2.5-pro"
+    ],
+    "temperature": 0.2
+  }
+}

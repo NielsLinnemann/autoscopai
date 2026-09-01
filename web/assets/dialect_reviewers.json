@@ -1,0 +1,94 @@
+{
+  "respondents": [
+    {
+      "id": "authors_advocate",
+      "name": "Author's Advocate",
+      "model": "qwen/qwen3.5-122b-a10b",
+      "model_candidates": [
+        "qwen/qwen3.5-122b-a10b",
+        "qwen/qwen3-max",
+        "mistralai/mistral-medium-3.1",
+        "deepseek/deepseek-v3.2"
+      ],
+      "temperature": 0.25,
+      "stance": "Defend the article as a competent philosopher of physics who knows what the paper is trying to accomplish. Identify which reviewer complaints rest on misunderstandings, unfair standards, or requests outside the paper's scope."
+    },
+    {
+      "id": "philphys_specialist",
+      "name": "Philosophy of Physics Specialist",
+      "model": "google/gemini-2.5-flash",
+      "model_candidates": [
+        "google/gemini-2.5-flash",
+        "google/gemini-3.5-flash",
+        "mistralai/mistral-medium-3.1",
+        "deepseek/deepseek-v3.2"
+      ],
+      "temperature": 0.2,
+      "stance": "Assess the first-round complaints for philosophical and technical fairness in philosophy of physics. Distinguish serious objections from reviewer overreach."
+    },
+    {
+      "id": "citation_defender",
+      "name": "Citation and Literature Defender",
+      "model": "mistralai/mistral-medium-3.1",
+      "model_candidates": [
+        "mistralai/mistral-medium-3.1",
+        "google/gemini-2.5-flash",
+        "qwen/qwen3.5-122b-a10b",
+        "deepseek/deepseek-v3.2"
+      ],
+      "temperature": 0.2,
+      "stance": "Evaluate whether the citation and literature complaints are justified given the paper's bibliography, argumentative scope, and genre. Mark missing sources only when the omission matters."
+    },
+    {
+      "id": "scope_arbiter",
+      "name": "Scope and Framing Arbiter",
+      "model": "anthropic/claude-haiku-4.5",
+      "model_candidates": [
+        "anthropic/claude-haiku-4.5",
+        "google/gemini-2.5-flash",
+        "mistralai/mistral-medium-3.1",
+        "deepseek/deepseek-v3.2"
+      ],
+      "temperature": 0.2,
+      "stance": "Separate legitimate revision demands from requests that would turn the paper into a different project. Focus on scope, framing, burden of proof, and dialectical fairness."
+    },
+    {
+      "id": "skeptical_meta_reviewer",
+      "name": "Skeptical Meta-Reviewer",
+      "model": "x-ai/grok-4.3",
+      "model_candidates": [
+        "x-ai/grok-4.3",
+        "x-ai/grok-4.5",
+        "mistralai/mistral-medium-3.1",
+        "deepseek/deepseek-r1"
+      ],
+      "temperature": 0.3,
+      "stance": "Pressure-test the defenses. Identify where the response agents rationalize weak passages, dodge real problems, or minimize important reviewer criticisms."
+    }
+  ],
+  "dialectical_editor": {
+    "id": "dialectical_editor",
+    "name": "Dialectical Editor",
+    "model": "openai/gpt-5.6-terra",
+    "model_candidates": [
+      "openai/gpt-5.6-terra",
+      "anthropic/claude-sonnet-5",
+      "google/gemini-2.5-pro",
+      "deepseek/deepseek-r1"
+    ],
+    "temperature": 0.2
+  },
+  "learning_teacher": {
+    "id": "learning_teacher",
+    "name": "Learning Teacher",
+    "model": "deepseek/deepseek-v3.2",
+    "model_candidates": [
+      "deepseek/deepseek-v3.2",
+      "google/gemini-2.5-flash",
+      "mistralai/mistral-medium-3.1",
+      "openai/gpt-5.6-luna"
+    ],
+    "temperature": 0.2,
+    "focus": "Extract durable writing lessons from the review process: habits, recurring weaknesses, German-influenced phrasing, paragraph structure, argumentative setup, citation practice, scope control, and revision routines."
+  }
+}
