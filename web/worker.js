@@ -25,8 +25,18 @@ function withTimeout(promise, ms, label) {
 // script itself and anything it dynamically imports; that silently hung
 // (no error, no progress) under Tauri's custom asset protocol. importScripts
 // has no such requirement and is the more broadly compatible choice here.
+//
+// Wrapped in try/catch deliberately: importScripts loads a cross-origin
+// script, and an uncaught error from it only ever reaches the parent as a
+// browser-sanitized "Script error." with no real message. Catching it here
+// ourselves gets the real error/message before that sanitization applies.
 reportInitProgress("loading pyodide.js from CDN");
-importScripts(PYODIDE_INDEX_URL + "pyodide.js");
+try {
+  importScripts(PYODIDE_INDEX_URL + "pyodide.js");
+} catch (error) {
+  self.postMessage({ type: "error", message: `importScripts(pyodide.js) failed: ${(error && error.message) || error}` });
+  throw error;
+}
 reportInitProgress("pyodide.js loaded");
 
 async function initPyodide() {
