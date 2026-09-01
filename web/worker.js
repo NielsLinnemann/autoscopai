@@ -66,7 +66,10 @@ async function initPyodide() {
   const pyodide = await withTimeout(loadPyodide({ indexURL: PYODIDE_INDEX_URL }), 60000, "loadPyodide()");
 
   reportInitProgress("loading micropip");
-  await withTimeout(pyodide.loadPackage("micropip"), 30000, "loadPackage(micropip)");
+  // micropip depends on the "packaging" package, which it normally fetches
+  // lazily from indexURL on first use; load it explicitly up front since
+  // we're serving from a local bundle rather than the CDN.
+  await withTimeout(pyodide.loadPackage(["micropip", "packaging"]), 30000, "loadPackage(micropip, packaging)");
 
   reportInitProgress("installing pypdf");
   const micropip = pyodide.pyimport("micropip");
