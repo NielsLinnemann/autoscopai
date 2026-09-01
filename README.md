@@ -6,18 +6,14 @@ AutoscopAI v0.1 is experimental educational software for trying review workflows
 
 ## Download and install
 
-Get the app for your computer from the [Releases page](https://github.com/NielsLinnemann/autoscopai/releases) (look for the latest release, then download the file for your system):
-
-- **Mac**: download the `.dmg` file, double-click it, then drag AutoscopAI into your Applications folder.
-- **Windows**: download the `.exe` (or `.msi`) file and run it.
+Get the app from the [Releases page](https://github.com/NielsLinnemann/autoscopai/releases) (look for the latest release, then download the `.dmg` file). Currently macOS only — Windows support is not being built for now.
 
 ### Opening it the first time
 
-Because this app isn't (yet) registered with Apple or Microsoft, your computer will show a security warning the first time you open it. This is normal for a small, independently made app — here's how to get past it:
+Because this app isn't (yet) registered with Apple, your Mac will show a security warning the first time you open it. This is normal for a small, independently made app — here's how to get past it:
 
-**On a Mac:**
-1. Drag AutoscopAI into your Applications folder (if you haven't already).
-2. Double-click it. You'll very likely see a message that it **"is damaged and can't be opened."** This is a misleading message — the app isn't actually damaged, it's just unrecognized. Don't move it to the Trash.
+1. Double-click the downloaded `.dmg`, then drag AutoscopAI into your Applications folder.
+2. Double-click it there. You'll very likely see a message that it **"is damaged and can't be opened."** This is a misleading message — the app isn't actually damaged, it's just unrecognized. Don't move it to the Trash.
 3. Open **Terminal** (press `Cmd+Space`, type `Terminal`, press Return — it's a built-in Mac app, in Applications → Utilities).
 4. Paste this line into the Terminal window and press Return:
    ```bash
@@ -27,10 +23,6 @@ Because this app isn't (yet) registered with Apple or Microsoft, your computer w
 5. Now double-click AutoscopAI in Applications again — it opens normally.
 
 You only need to do this once per download — after that, it launches normally like any other app.
-
-**On Windows:**
-1. Double-click the file you downloaded.
-2. If you see a blue "Windows protected your PC" screen, click **More info**, then click **Run anyway**.
 
 ## What it does, briefly
 
@@ -89,7 +81,7 @@ Requires Rust (`rustup`) and the Tauri CLI (`cargo install tauri-cli`). No Node/
 cargo tauri build
 ```
 
-This produces a native `.app`/`.dmg` (macOS), `.exe`/`.msi` (Windows), or `.AppImage`/`.deb` (Linux) under `src-tauri/target/release/bundle/`, depending on the host OS. Cross-compiling a Windows build from macOS isn't supported by Tauri's toolchain — see `.github/workflows/build.yml` for a CI matrix that builds all three platforms on their native runners.
+This produces a native `.app`/`.dmg` (macOS) or `.AppImage`/`.deb` (Linux) under `src-tauri/target/release/bundle/`, depending on the host OS — see `.github/workflows/build.yml` for a CI matrix that builds both on their native runners. Windows isn't currently built.
 
 For local development with hot reload:
 
@@ -111,7 +103,7 @@ web/
   zip-lite.js            dependency-free ZIP writer (replaces AutoReview's server-side zipfile export)
   assets/                mascot icon + bundled default agent/preset config (reviewers.json, dialect_reviewers.json, mode_presets.json)
 src-tauri/               Tauri desktop wrapper (native window around web/)
-.github/workflows/       CI: cross-platform Tauri builds (macOS/Windows/Linux)
+.github/workflows/       CI: Tauri builds (macOS/Linux)
 ```
 
 ## AI Acknowledgment
