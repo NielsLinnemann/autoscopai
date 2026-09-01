@@ -1,8 +1,40 @@
 # AutoscopAI
 
-A browser-native, platform-independent rewrite of [AutoReview](https://github.com/NielsLinnemann/autoreview): the same multi-agent, dialectical academic-article review panel, but with no server and no separate Python install. The whole engine — PDF/text extraction, prompt orchestration, HTTP calls to your model provider — runs as real Python inside your browser via [Pyodide](https://pyodide.org) (CPython compiled to WebAssembly), in a Web Worker. Settings and run history live in this browser's IndexedDB. The desktop build wraps the same static site in a small native window via [Tauri](https://tauri.app).
+AutoscopAI is a desktop app that runs a panel of AI reviewers on an academic article draft: several independent reviewers each give feedback, an editor combines their comments, then a second round of agents checks whether the first round's criticisms were actually fair, before a final editor writes up the verdict. You provide your own API key for a model provider (OpenRouter or OpenAI); the app does the rest.
 
-AutoscopAI v0.1 is experimental educational software for trying review workflows. It makes no guarantees about correctness, completeness, fitness for publication decisions, costs, privacy, or availability.
+AutoscopAI v0.1 is experimental educational software for trying review workflows. It makes no guarantees about correctness, completeness, fitness for publication decisions, costs, privacy, or availability. Treat everything it produces as fallible feedback, not as an authority.
+
+## Download and install
+
+Get the app for your computer from the [Releases page](https://github.com/NielsLinnemann/autoscopai/releases) (look for the latest release, then download the file for your system):
+
+- **Mac**: download the `.dmg` file, double-click it, then drag AutoscopAI into your Applications folder.
+- **Windows**: download the `.exe` (or `.msi`) file and run it.
+
+### Opening it the first time
+
+Because this app isn't (yet) registered with Apple or Microsoft, your computer will show a security warning the first time you open it. This is normal for a small, independently made app — here's how to get past it:
+
+**On a Mac:**
+1. Double-click AutoscopAI in your Applications folder.
+2. If you see a warning that it "cannot be verified" or "is damaged": don't click Cancel/Move to Trash. Instead, right-click (or Control-click) the AutoscopAI icon and choose **Open**, then click **Open** again in the dialog that appears.
+3. If that still doesn't work, open **System Settings → Privacy & Security**, scroll down, and you should see a message about AutoscopAI being blocked with an **Open Anyway** button. Click it, confirm with your password or Touch ID, then try opening the app again.
+
+**On Windows:**
+1. Double-click the file you downloaded.
+2. If you see a blue "Windows protected your PC" screen, click **More info**, then click **Run anyway**.
+
+You only need to do this once — after the first successful open, it launches normally like any other app.
+
+## What it does, briefly
+
+Drop your article in (PDF, LaTeX, Markdown, or plain text), pick a cost mode (Cheapest / Balanced / Most suitable), add your API key in Settings, and click **Run Full Review**. You can click on any reviewer in the diagram to change its focus, its model, or its instructions. Past runs are kept in the History panel on the right, and you can export everything as a zip file at any time.
+
+---
+
+## How it works (for the curious, and for developers)
+
+A browser-native, platform-independent rewrite of [AutoReview](https://github.com/NielsLinnemann/autoreview): the same multi-agent, dialectical academic-article review panel, but with no server and no separate Python install. The whole engine — PDF/text extraction, prompt orchestration, HTTP calls to your model provider — runs as real Python inside your browser via [Pyodide](https://pyodide.org) (CPython compiled to WebAssembly), in a Web Worker. Settings and run history live in this browser's IndexedDB. The desktop build wraps the same static site in a small native window via [Tauri](https://tauri.app).
 
 ## How it's different from AutoReview
 

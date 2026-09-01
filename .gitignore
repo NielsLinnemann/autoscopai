@@ -4,3 +4,7 @@ src-tauri/target/
 src-tauri/gen/schemas
 node_modules/
 *.log
+*.dmg
+*.exe
+*.msi
+*.AppImage
