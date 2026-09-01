@@ -42,20 +42,19 @@ let requestCounter = 0;
 const pendingRequests = new Map();
 let runHandlers = null;
 
-const DEBUG_LOG_PATH = "/tmp/autoscopai-debug.log";
-function debugLog(message) {
-  console.log(message);
-  if (!isTauri) return;
-  const line = `${new Date().toISOString()} ${message}\n`;
-  window.__TAURI__.fs.writeTextFile(DEBUG_LOG_PATH, line, { append: true }).catch(() => {});
-}
-
 function initWorker() {
-  debugLog("initWorker: creating worker");
   worker = new Worker("worker.js");
+  let gotAnyMessage = false;
+  setTimeout(() => {
+    if (!gotAnyMessage) {
+      const chip = $("engine-status");
+      chip.textContent = "Python runtime failed: worker never responded within 8s";
+      chip.classList.add("error");
+    }
+  }, 8000);
   worker.onmessage = (event) => {
+    gotAnyMessage = true;
     const msg = event.data;
-    debugLog(`worker message: ${JSON.stringify(msg).slice(0, 500)}`);
     if (msg.type === "init-progress") {
       $("engine-status").textContent = `Starting Python runtime… (${msg.step})`;
       return;
@@ -93,7 +92,7 @@ function initWorker() {
     const detail = event.message || "unknown worker error";
     chip.textContent = `Python runtime failed to start: ${detail}`;
     chip.classList.add("error");
-    debugLog(`worker.onerror: ${detail} (${event.filename}:${event.lineno})`);
+    console.error("Worker error", event);
   };
   worker.postMessage({ type: "init" });
 }
@@ -1090,7 +1089,7 @@ document.querySelectorAll(".help-button").forEach((button) => {
 });
 
 const dropZone = $("drop-zone");
-const isTauri = typeof window.__TAURI__ !== "undefined";
+const isTauriApp = typeof window.__TAURI__ !== "undefined";
 
 // Always wire up the plain HTML5 drag-and-drop path first, unconditionally.
 // A failure setting up the Tauri-native path below must never be able to
@@ -1108,7 +1107,7 @@ dropZone.addEventListener("drop", (event) => {
   uploadFiles(event.dataTransfer.files);
 });
 
-if (isTauri) {
+if (isTauriApp) {
   // The packaged desktop app: WKWebView's HTML5 drag-and-drop fires the drop
   // event but dataTransfer.files often comes back empty, so prefer Tauri's
   // native file-drop event (real file paths via the fs plugin) when it's

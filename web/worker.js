@@ -1,6 +1,8 @@
 // AutoscopAI review worker. Runs entirely in a dedicated Web Worker so the
 // tab stays responsive during a run, and so a run keeps going even while the
 // tab is backgrounded (though not if the tab/browser is closed — see README).
+self.postMessage({ type: "init-progress", step: "worker script started" });
+
 const PYODIDE_VERSION = "v314.0.6";
 const PYODIDE_INDEX_URL = `https://cdn.jsdelivr.net/pyodide/${PYODIDE_VERSION}/full/`;
 
