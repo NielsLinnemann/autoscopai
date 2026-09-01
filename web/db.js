@@ -1,5 +1,5 @@
-// Tiny promise-based IndexedDB wrapper. Replaces AutoReview's server-side
-// SQLite history + per-user config/uploads files with browser-local storage.
+// Tiny promise-based IndexedDB wrapper for settings and run history, kept
+// entirely in browser-local storage (no backend database).
 const DB_NAME = "autoscopai";
 const DB_VERSION = 1;
 

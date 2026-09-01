@@ -1,6 +1,6 @@
-// AutoscopAI — browser-native port of AutoReview. No server: settings and
-// history live in this browser's IndexedDB (db.js), and the review engine
-// itself is real Python running inside a Web Worker via Pyodide (worker.js).
+// AutoscopAI — browser-native, no server: settings and history live in
+// this browser's IndexedDB (db.js), and the review engine itself is real
+// Python running inside a Web Worker via Pyodide (worker.js).
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
@@ -239,7 +239,7 @@ function toggleDeveloperMode() {
 }
 
 // ---------------------------------------------------------------------------
-// Config decoration + organigram rendering (unchanged from AutoReview — pure client logic)
+// Config decoration + organigram rendering — pure client logic
 // ---------------------------------------------------------------------------
 
 function normalizeConfig(config) {

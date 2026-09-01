@@ -1,13 +1,10 @@
 """
 AutoscopAI review engine — runs inside Pyodide (CPython compiled to WebAssembly)
-in a Web Worker. This is a browser-adapted port of AutoReview's review.py and
-dialect_review.py: same prompts, same model-fallback logic, same output
-sections. The two things that had to change because there is no local OS
-process here: HTTP calls go through pyodide.http.pyfetch instead of
-urllib.request, and PDF/text extraction works on in-memory bytes instead of
-file paths. Concurrency (running a stage's agents in parallel) is orchestrated
-from worker.js via asyncio, one call per agent, so JS can report per-agent
-progress as each one finishes.
+in a Web Worker. HTTP calls go through pyodide.http.pyfetch (no local OS
+process to route through), and PDF/text extraction works on in-memory bytes
+instead of file paths. Concurrency (running a stage's agents in parallel) is
+orchestrated from worker.js via asyncio, one call per agent, so JS can report
+per-agent progress as each one finishes.
 """
 import base64
 import io

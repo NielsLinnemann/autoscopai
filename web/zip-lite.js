@@ -1,5 +1,5 @@
 // Minimal ZIP writer (STORE method, no compression). No dependencies.
-// Enough to reproduce AutoReview's "Export all" -> .zip download entirely client-side.
+// Powers the "Export all" -> .zip download, built entirely client-side.
 function crc32(bytes) {
   let c;
   const table = crc32.table || (crc32.table = (() => {
