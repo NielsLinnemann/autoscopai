@@ -788,6 +788,18 @@ async function runReview() {
 // History (replaces /api/history, /api/artifact, /api/export)
 // ---------------------------------------------------------------------------
 
+// Fixed reading order for the five stages of a run, oldest to newest in the
+// actual review pipeline. "verdict" (Dialectical editor / Final verdict) is
+// the default-active stage for every history item.
+const HISTORY_STAGES = [
+  { field: "firstIndividualText", label: "First feedback round" },
+  { field: "firstSynthesis", label: "Lead editor" },
+  { field: "dialecticalResponsesText", label: "Second feedback round" },
+  { field: "verdict", label: "Dialectical editor (Final verdict)" },
+  { field: "learnings", label: "Learning teacher" },
+];
+const DEFAULT_STAGE_FIELD = "verdict";
+
 async function refreshHistory(preferredRunId = "") {
   const runs = await AutoscopDB.listRuns();
   const list = $("history-list");
@@ -804,39 +816,52 @@ async function refreshHistory(preferredRunId = "") {
     const status = run.status || "completed";
     item.classList.add(status === "failed" ? "failed" : "completed");
     const doc = run.document || {};
+    const availableStages = HISTORY_STAGES.filter((stage) => run[stage.field]);
     item.innerHTML = `
       <strong>${escapeHtml(doc.title || run.articleName)}</strong>
       <span class="muted">${escapeHtml(doc.authors || "Unknown author")}</span>
       <span class="muted">${escapeHtml(new Date(run.started).toLocaleString())}</span>
       <span class="history-status ${status === "failed" ? "failed" : "completed"}">${status === "failed" ? "Failed" : "Completed"}</span>
       <div class="history-links">
-        ${run.verdict ? `<button class="link-button" data-field="verdict" data-title="Final verdict · ${escapeAttr(run.articleName)}">Final verdict</button>` : ""}
-        ${run.dialecticalResponsesText ? `<button class="link-button" data-field="dialecticalResponsesText" data-title="Intermediate feedback · ${escapeAttr(run.articleName)}">Intermediate feedback</button>` : ""}
-        ${run.firstSynthesis ? `<button class="link-button" data-field="firstSynthesis" data-title="First synthesis · ${escapeAttr(run.articleName)}">First synthesis</button>` : ""}
-        ${run.learnings ? `<button class="link-button" data-field="learnings" data-title="Common learnings · ${escapeAttr(run.articleName)}">Common learnings</button>` : ""}
+        ${availableStages
+          .map(
+            (stage) =>
+              `<button class="stage-chip${stage.field === DEFAULT_STAGE_FIELD ? " active" : ""}" data-field="${stage.field}" data-title="${escapeAttr(stage.label)} · ${escapeAttr(run.articleName)}">${escapeHtml(stage.label)}</button>`
+          )
+          .join("")}
       </div>
     `;
+    const showStage = (field, title) => {
+      item.querySelectorAll(".stage-chip").forEach((btn) => btn.classList.toggle("active", btn.dataset.field === field));
+      loadArtifactText(run[field], title);
+    };
     item.querySelectorAll("[data-field]").forEach((button) => {
-      button.addEventListener("click", () => loadArtifactText(run[button.dataset.field], button.dataset.title));
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        showStage(button.dataset.field, button.dataset.title);
+      });
     });
-    if (run.verdict) {
+    if (run[DEFAULT_STAGE_FIELD]) {
+      const defaultStage = HISTORY_STAGES.find((s) => s.field === DEFAULT_STAGE_FIELD);
+      const defaultTitle = `${defaultStage.label} · ${run.articleName}`;
       item.addEventListener("click", (event) => {
         if (event.target.closest("button")) return;
-        loadArtifactText(run.verdict, `Final verdict · ${run.articleName}`);
+        showStage(DEFAULT_STAGE_FIELD, defaultTitle);
       });
       item.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") loadArtifactText(run.verdict, `Final verdict · ${run.articleName}`);
+        if (event.key === "Enter") showStage(DEFAULT_STAGE_FIELD, defaultTitle);
       });
     }
     list.appendChild(item);
-    if (preferredRunId && run.id === preferredRunId && run.verdict) {
+    if (preferredRunId && run.id === preferredRunId && run[DEFAULT_STAGE_FIELD]) {
       loadedPreferred = true;
-      loadArtifactText(run.verdict, `Final verdict · ${run.articleName}`);
+      const defaultStage = HISTORY_STAGES.find((s) => s.field === DEFAULT_STAGE_FIELD);
+      showStage(DEFAULT_STAGE_FIELD, `${defaultStage.label} · ${run.articleName}`);
     }
   });
   if (!preferredRunId && !loadedPreferred) {
     const latest = runs[0];
-    if (latest?.verdict) loadArtifactText(latest.verdict, `Latest verdict · ${latest.articleName}`);
+    if (latest?.[DEFAULT_STAGE_FIELD]) loadArtifactText(latest[DEFAULT_STAGE_FIELD], `Latest verdict · ${latest.articleName}`);
   }
 }
 
@@ -989,19 +1014,45 @@ function collectAgentSettings() {
   };
 }
 
-function exportAgentSettings() {
+async function exportAgentSettings() {
   const data = collectAgentSettings();
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
+  const json = JSON.stringify(data, null, 2);
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 15);
+  const filename = `autoscopai-agents-${stamp}.json`;
+
+  // In the desktop app, let the user pick where to save via the native
+  // Save dialog. In a plain browser there's no such API -- fall back to a
+  // normal download, which lands wherever the browser is configured to
+  // save downloads (usually the Downloads folder).
+  if (isTauriApp && window.__TAURI__?.dialog?.save && window.__TAURI__?.fs?.writeTextFile) {
+    try {
+      const path = await window.__TAURI__.dialog.save({
+        defaultPath: filename,
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      });
+      if (!path) {
+        $("agent-io-status").textContent = "Export canceled.";
+        return;
+      }
+      await window.__TAURI__.fs.writeTextFile(path, json);
+      $("agent-io-status").textContent = `Agent settings exported to ${path}. No API key or provider settings are included in this file.`;
+      return;
+    } catch (error) {
+      $("agent-io-status").textContent = `Export failed: ${error.message || error}`;
+      return;
+    }
+  }
+
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `autoscopai-agents-${stamp}.json`;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-  $("agent-io-status").textContent = "Agent settings exported. No API key or provider settings are included in this file.";
+  $("agent-io-status").textContent = `Agent settings exported as ${filename} to your browser's downloads location. No API key or provider settings are included in this file.`;
 }
 
 async function importAgentSettingsFile(file) {
